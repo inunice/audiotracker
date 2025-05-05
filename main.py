@@ -42,7 +42,9 @@ def convert_time_to_milliseconds(time_str):
     return float(time_str)
 
 
-def export_segment(segment, output_dir, index, label, artist, bitrate="192k"):
+def export_segment(
+    segment, output_dir, index, label, artist, album_info, bitrate="192k"
+):
     segment.export(
         os.path.join(output_dir, f"{index+1}_{label}.mp3"),
         format="mp3",
@@ -51,6 +53,11 @@ def export_segment(segment, output_dir, index, label, artist, bitrate="192k"):
             "title": label,
             "artist": artist,
             "track": str(index + 1),
+            "album": f"{album_info.get('Title', '').strip()} ({album_info.get('Tour', '').strip()}, {album_info.get('Date', '').strip()})",
+            "album_artist": f"{album_info.get('Tour', '').strip()} Cast of {album_info.get('Title', '').strip()}",
+            "date": album_info.get("Date", ""),
+            "comment": album_info.get("Description", ""),
+            "genre": album_info.get("Genre", ""),
         },
         cover="info/cover-art.png",
     )
@@ -60,6 +67,11 @@ def main():
 
     output_dir = "output"
     create_output_directory(output_dir)
+
+    info_path = "info/info.csv"
+    with open(info_path, newline="") as info_file:
+        reader = csv.DictReader(info_file)
+        album_info = {row["Detail"]: row["Information"] for row in reader}
 
     input_audio_path = "input.m4a"
     audio = load_audio(input_audio_path)
@@ -92,7 +104,7 @@ def main():
         print(
             f"🎧 Segment {i+1}: '{label}' from {start_time_ms} ms to {end_time_ms} ms"
         )
-        export_segment(segment, output_dir, i, label, artist)
+        export_segment(segment, output_dir, i, label, artist, album_info)
 
 
 if __name__ == "__main__":
