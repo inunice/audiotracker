@@ -44,15 +44,15 @@ def convert_time_to_milliseconds(time_str):
 
 def export_segment(segment, output_dir, index, label, artist, bitrate="192k"):
     segment.export(
-        os.path.join(output_dir, f"{index+1}_{label}.m4a"),
-        format="mp4",
-        codec="aac",
+        os.path.join(output_dir, f"{index+1}_{label}.mp3"),
+        format="mp3",
         bitrate=bitrate,
         tags={
             "title": label,
             "artist": artist,
             "track": str(index + 1),
         },
+        cover="info/cover-art.png",
     )
 
 
