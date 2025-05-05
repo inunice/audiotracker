@@ -33,13 +33,13 @@ def read_songs(file_path):
         reader = csv.DictReader(file)
         for row in reader:
             song = row["Song"]
-            performers = row["Perfomer"].split(" | ")
-            songs[song] = performers
+            roles = row["Role"].split(" | ")
+            songs[song] = roles
     return songs
 
 
 def convert_time_to_milliseconds(time_str):
-    return float(time_str) * 1000
+    return float(time_str)
 
 
 def export_segment(segment, output_dir, index, label, artist, bitrate="192k"):
@@ -64,22 +64,34 @@ def main():
     input_audio_path = "input.m4a"
     audio = load_audio(input_audio_path)
 
-    labels_path = "show-info/label.csv"
+    labels_path = "info/label.csv"
     labels = read_labels(labels_path)
 
-    performers_path = "show-info/performers.csv"
+    performers_path = "info/performers.csv"
     cast = read_performers(performers_path)
 
-    songs_path = "show-info/songs.csv"
+    songs_path = "info/songs.csv"
     songs = read_songs(songs_path)
 
     for i, row in enumerate(labels):
         start_time_ms = convert_time_to_milliseconds(row["Start"])
-        end_time_ms = convert_time_to_milliseconds(row["End"])
+        end_str = row.get("End", "").strip()
+        if end_str:
+            end_time_ms = convert_time_to_milliseconds(end_str)
+        elif i + 1 < len(labels):
+            end_time_ms = convert_time_to_milliseconds(labels[i + 1]["Start"])
+        else:
+            end_time_ms = len(
+                audio
+            )  # If it's the last row and no end time, use full audio duration
+
         label = row["Song"]
         performers = songs.get(label, [])
         artist = ", ".join([cast.get(character, "Unknown") for character in performers])
         segment = audio[start_time_ms:end_time_ms]
+        print(
+            f"🎧 Segment {i+1}: '{label}' from {start_time_ms} ms to {end_time_ms} ms"
+        )
         export_segment(segment, output_dir, i, label, artist)
 
 
